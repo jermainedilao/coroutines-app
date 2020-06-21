@@ -1,6 +1,5 @@
 package com.jermaine.coroutines.ui
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,10 +14,6 @@ import kotlinx.coroutines.withContext
 
 class MainViewModel(private val dataRepository: DataRepository) : ViewModel() {
 
-    companion object {
-        private const val TAG = "MainViewModel"
-    }
-
     private val _items by lazy {
         MutableLiveData<List<Item>>()
     }
@@ -31,30 +26,59 @@ class MainViewModel(private val dataRepository: DataRepository) : ViewModel() {
 
     val state: Flow<MainState> = _state.openSubscription().receiveAsFlow()
 
-    fun search() {
+    fun search(isRefresh: Boolean = false) {
+        if (!isRefresh && _items.value?.isNotEmpty() == true) {
+            // Do not re fetch when list if not empty and not coming from refresh.
+            return
+        }
+
         viewModelScope.launch {
-            _state.send(MainState.ShowLoading)
+            if (!isRefresh) {
+                // Skip showing loading when coming from swipe refresh.
+                _state.send(MainState.ShowLoading)
+            }
 
-            val sorted = try {
-                val response = dataRepository.search()
+            getSearchList()?.let {
+                _items.value = it
+            }
+            _state.send(MainState.HideLoading)
+        }
+    }
 
+    /**
+     * Responsible for getting list from repository.
+     *
+     * @return list of items or null if error happens.
+     */
+    private suspend fun getSearchList(): List<Item>? {
+        return try {
+            val result = dataRepository.search()
+            if (result.isSuccessful) {
                 // Run data manipulation in Dispatchers.Default
                 // This is similar to Schedulers.computation() in RxJava.
                 withContext(Dispatchers.Default) {
-                    response
-                        .results
+                    result
+                        .value()
                         .sortedBy { it.trackName }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _state.send(MainState.Error)
+            } else {
+                // Handled error occurred.
+                _state
+                    .send(
+                        MainState.Error(
+                            result.error().message
+                        )
+                    )
                 null
             }
-
-            sorted?.let {
-                _items.value = sorted
-            }
-            _state.send(MainState.HideLoading)
+        } catch (e: Exception) {
+            // Unexpected error occurred.
+            e.printStackTrace()
+            _state
+                .send(
+                    MainState.Error()
+                )
+            null
         }
     }
 }

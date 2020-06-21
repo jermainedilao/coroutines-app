@@ -17,7 +17,6 @@ import com.jermaine.coroutines.databinding.ActivityMainBinding
 import com.jermaine.coroutines.databinding.ItemTrackBinding
 import com.jermaine.coroutines.ui.adapters.ItemDiffUtilCallback
 import com.jermaine.coroutines.ui.adapters.SimpleListAdapter
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.serialization.UnstableDefault
@@ -87,20 +86,38 @@ class MainActivity : AppCompatActivity() {
                 binding
                     .loading
                     .visibility = View.GONE
+
+                binding
+                    .swipeRefreshLayout
+                    .isRefreshing = false
             }
-            MainState.Error -> {
-                Toast
-                    .makeText(
-                        this,
-                        getString(R.string.generic_error),
-                        Toast.LENGTH_SHORT
-                    )
-                    .show()
+            is MainState.Error -> {
+                showError(state.message)
             }
         }
     }
 
+    private fun showError(message: String) {
+        Toast
+            .makeText(
+                this,
+                if (message.isNotEmpty()) {
+                    message
+                } else {
+                    getString(R.string.generic_error)
+                },
+                Toast.LENGTH_SHORT
+            )
+            .show()
+    }
+
     private fun setupViews() {
+        binding
+            .swipeRefreshLayout
+            .setOnRefreshListener {
+                viewModel.search(true)
+            }
+
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             addItemDecoration(

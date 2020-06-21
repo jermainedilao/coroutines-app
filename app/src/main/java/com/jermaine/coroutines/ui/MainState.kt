@@ -5,5 +5,5 @@ sealed class MainState {
 
     object HideLoading : MainState()
 
-    object Error : MainState()
+    class Error(val message: String = "") : MainState()
 }
