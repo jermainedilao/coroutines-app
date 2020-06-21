@@ -4,9 +4,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Base class for all data repositories.
+ * Base class for all remote source.
  */
-open class BaseRepository {
+open class BaseRemoteSource {
     /**
      * Executes a network request and handles error accordingly.
      */

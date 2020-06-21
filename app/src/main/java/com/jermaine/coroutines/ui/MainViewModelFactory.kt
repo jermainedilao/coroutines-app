@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.jermaine.coroutines.data.DataRepository
+import com.jermaine.coroutines.data.remote.DataRemoteSource
 import com.jermaine.coroutines.service.ApiService
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
@@ -28,13 +29,21 @@ class MainViewModelFactory : ViewModelProvider.Factory {
             .create(ApiService::class.java)
     }
 
+    private val remoteSource by lazy {
+        DataRemoteSource(
+            apiService
+        )
+    }
+
+    private val repository by lazy {
+        DataRepository(remoteSource)
+    }
+
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         return if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             MainViewModel(
-                DataRepository(
-                    apiService
-                )
+                repository
             ) as T
         } else {
             throw IllegalArgumentException("Unknown view model class ${modelClass::class.java.simpleName}")

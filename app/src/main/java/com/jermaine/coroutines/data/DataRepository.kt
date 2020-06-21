@@ -1,15 +1,12 @@
 package com.jermaine.coroutines.data
 
-import com.jermaine.coroutines.core.BaseRepository
+import com.jermaine.coroutines.core.BaseRemoteSource
 import com.jermaine.coroutines.core.Result
+import com.jermaine.coroutines.data.remote.DataRemoteSource
 import com.jermaine.coroutines.service.ApiService
 
-class DataRepository(private val apiService: ApiService) : BaseRepository() {
+class DataRepository(private val remote: DataRemoteSource) : BaseRemoteSource() {
     suspend fun search(): Result<List<Item>> {
-        return execute {
-            apiService
-                .search("john+mayer")
-                .results
-        }
+        return remote.search()
     }
 }
