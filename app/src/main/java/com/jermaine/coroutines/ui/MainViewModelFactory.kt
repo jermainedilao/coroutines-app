@@ -1,4 +1,4 @@
-package com.jermaine.coroutines
+package com.jermaine.coroutines.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
